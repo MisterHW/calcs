@@ -1,0 +1,74 @@
+<html>
+<head>
+<script language="javascript">
+	String.prototype.format = function(placeholders) {
+		var s = this;
+		for(var propertyName in placeholders) {
+			var re = new RegExp('{' + propertyName + '}', 'gm');
+			s = s.replace(re, placeholders[propertyName]);
+		}    
+		return s;
+	};
+
+	function appendScript()
+	{
+		var partsStr = document.all.parts.value;
+		var listOfParts = partsStr.split(", ");
+		for(currentPart in listOfParts)
+		{
+			document.all.outputField.value += "ATTR {partno} {attrname} '{attrval}';\n".format({
+				partno:   listOfParts[currentPart],
+				attrname: document.all.attr_name.value.trim(),
+				attrval:  document.all.attr_value.value.trim() });
+		}
+	}
+	
+
+	function demoValues() {
+		document.all.attr_name.value ="MOUSER";
+		document.all.attr_value.value ="81-GRM21BR71A106KA3L";
+		document.all.parts.value ="C4, C5, C6, C7, C8, CF1, CP1, CP3, CP4, CP6, CP7, CP25, CP38, CP49, CP54, CP56, CP64";
+	}
+	
+	function nextScript() {
+		document.all.attr_value.value ="";
+		document.all.parts.value ="";
+	}
+
+</script>
+</head>
+
+<body bgcolor="#EEEEFF">
+<p><b>Eagle BOM part updater</b><br>
+<br>
+	The eagle BOM part updater can create an eagle script that creates ATTRIBUTE entries and sets the appropriate value for multiple parts. A list of <br>
+	parts sorted by value can be obtained via <i>RUN bom.ulp</i> in the schematic editor. Save text as .scr and drag&amp;drop into schematic editor (for each page).<br>
+	<u onclick="javascript:demoValues()">insert demo values</u> and have look at the output.<br>
+	<br>
+</p>
+<p>
+<form>
+		<table><tr>
+        <td style="width:150px;"><label for="attr_name">ATTR NAME&nbsp;</label> </td>
+        <td style="width:*" ><input type="text" id="attr_name" size="50" tabindex="1"> </td>
+		<td> <button type="button" id="calc" tabindex="4" onclick="javascript:appendScript();" style="width: 20em;">add to script</button> </td>
+		
+		</tr><tr>
+        <td style="width:150px;"><label for="attr_value">ATTR VALUE</label>  </td>
+        <td style="width:*"><input type="text" id="attr_value" size="50" tabindex="2"></td>
+		<td> <button type="button" id="calc" tabindex="5" onclick="javascript:nextScript();" style="width: 20em;">next</button> </td>
+
+		</tr><tr>
+        <td style="width:150px;" ><label for="parts">PARTS</label>  </td>
+        <td colspan="2"><input type="text" id="parts" size="90" tabindex="3"></td>
+		
+		</tr></table>
+</form>
+<br>
+<textarea rows="25" cols="100" id="outputField" tabindex="6">
+CHANGE DISPLAY OFF;
+</textarea>
+</p>
+
+</body>
+</html>

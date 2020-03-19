@@ -1,0 +1,176 @@
+﻿<html>
+<body onload="javascript:drawGrayBar();">
+
+	<script type="text/javascript">
+	
+	function drawGrayBar(){
+		var canvas = document.getElementById('canv');
+		if(canvas.getContext){
+			var cont = canvas.getContext('2d');
+			cont.fillStyle = "rgba(100,100,100, 0.5)";
+			cont.fillRect(0, 0, canvas.width, canvas.height);
+		}
+	}	
+		
+	function drawColourBar(){
+		var func_r = Function("h", "return 255.0*("+document.getElementById('fr').value+");");
+		var func_g = Function("h", "return 255.0*("+document.getElementById('fg').value+");");
+		var func_b = Function("h", "return 255.0*("+document.getElementById('fb').value+");");
+		var ColourCount = parseInt(document.getElementById('nColours').value);
+
+		var canvas = document.getElementById('canv');
+		if(canvas.getContext){
+		  var cont = canvas.getContext('2d');
+			var cWidth = canvas.width * 1.0;
+			var r, g, b, hqantized;
+			for(n = 0; n < cWidth; n++)
+			{
+				h = n*1.0 / (cWidth-1.0);
+				r = Math.floor(func_r(h));
+				g = Math.floor(func_g(h));
+				b = Math.floor(func_b(h));
+				cont.fillStyle = "rgba("+r+", "+g+", "+b+", 1.0)";
+				cont.fillRect(n, 0, 1, canvas.height/2);
+				
+				hquantized = Math.floor(h*ColourCount*0.99999999)/(ColourCount-1);
+				r = Math.floor(func_r(hquantized));
+				g = Math.floor(func_g(hquantized));
+				b = Math.floor(func_b(hquantized));
+				cont.fillStyle = "rgba("+r+", "+g+", "+b+", 1.0)";
+				cont.fillRect(n, canvas.height/2, 1, canvas.height);
+			}
+			
+		}
+	}
+	  
+	function RGBToColour16(r, g, b)
+	{
+		r = Math.floor(r);
+		g = Math.floor(g);
+		b = Math.floor(b);
+		if(r<0) r = 0;
+		if(g<0) g = 0;
+		if(b<0) b = 0;
+		if(r>255) r = 255;
+		if(g>255) g = 255;
+		if(b>255) b = 255;	
+		return (r - r % 8)*256 + (g - g % 4)*8 + (b - b % 8)/8;
+	}
+	 
+	function makeTable(){
+		var func_r = Function("return 255.0*("+document.getElementById('fr').value+");");
+		var func_g = Function("return 255.0*("+document.getElementById('fg').value+");");
+		var func_b = Function("return 255.0*("+document.getElementById('fb').value+");");	
+
+		var field = document.getElementById('outp');
+		var ColourCount = parseInt(document.getElementById('nColours').value);
+		field.innerHTML = 
+			"// colour table generator formulas: \n"+
+			"// R(h=0..1) = "+document.getElementById('fr').value+"\n"+
+			"// G(h=0..1) = "+document.getElementById('fg').value+"\n"+
+			"// B(h=0..1) = "+document.getElementById('fb').value+"\n"+			
+			"#define COLOUR_TABLE_SIZE "+ColourCount+"\n"+
+			"const uint16_t colourTable[] PROGMEM = {"+"\n";
+			
+			for(i=0;i<ColourCount;i++)
+			{
+				if(i%16 == 0){ field.innerHTML += "\t";}
+				
+				h = i*1.0 / (ColourCount-1);
+				r = Math.floor(func_r(h));
+				g = Math.floor(func_g(h));
+				b = Math.floor(func_b(h));
+				field.innerHTML += "0x"+(RGBToColour16(r,g,b)).toString(16);
+				
+				if(i != ColourCount -1){field.innerHTML += ", ";}
+				
+				if(i%16 == 15){
+					if(i != ColourCount -1) field.innerHTML += "\n";
+				}
+			}
+			
+		field.innerHTML += "\n};\n";
+	}
+	
+
+	  
+    </script>
+
+	<h1>RGB565 color table generator</h1>
+	
+	<p>
+		<br>
+		
+		<b>Colour bar preview:</b><br>
+		<canvas id="canv" width="660" height="64">
+			canvas element not supported.
+		</canvas>
+		<br>
+		<br>
+		
+		
+		<b>Parameters:</b><br>
+		<table>
+			<tr>
+				<td>Formel f&uuml;r R(h=0..1) = </td>
+				<td><input type="text" style="width:512px" id="fr" value="h*h*1.3"/></td>
+			</tr>
+			<tr>
+				<td>Formel f&uuml;r G(h=0..1) = </td>
+				<td><input type="text" style="width:512px" id="fg" value="Math.sin(Math.PI*h)*Math.sin(Math.PI*h)"/></td>		
+			</tr>
+			<tr>
+				<td>Formel f&uuml;r B(h=0..1) = </td>
+				<td><input type="text" style="width:512px" id="fb" value="(1-h)*(1-h)*1.3"/></td>	
+			</tr>
+			<tr>
+				<td>Anzahl Farben = </td>
+				<td><input type="text" style="width:160px" id="nColours" value="1024"/></td>	
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					<input type="button" value="update preview" style="width:160px" onclick="javascript:drawColourBar();" /> &nbsp;
+					<input type="button" value="generate table" style="width:160px" onclick="javascript:makeTable();" />
+				</td>		
+			</tr>
+		</table>
+		<br>
+		<br>
+		<br>
+		
+		<b>Links and Info:</b><br>		
+			<a href="https://developer.mozilla.org/de/docs/Web/Guide/HTML/Canvas_Tutorial/Grundlagen" target="newTab">JS Canvas-Grundlagen</a> -  
+			<a href="http://www.w3schools.com/js/js_math.asp" target="newTab">JS Math class</a> -
+			<a href="https://www.base64-image.de/" target="newTab">base64 image converter</a> <br>
+			<img src=" data:image/png;base64,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" />
+			
+			<br>
+		<br>
+	</p>
+
+
+	<a></a>
+		
+	<p>
+		<br>
+		<br>
+		<br>
+		<b>Output:</b><br>	
+		<pre id="outp">
+		<-- c code goes here -->
+		</pre>
+		
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+	</p>
+
+</body>
+</html>

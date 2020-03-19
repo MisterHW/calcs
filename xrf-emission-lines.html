@@ -1,0 +1,1526 @@
+﻿<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+<title>X-Ray Emission Lines</title>
+<link rev="made" href="mailto:xrayman@xray.uu.se">
+
+<script type="text/javascript">
+	var lo, mid, hi;
+	
+	if (!Array.prototype.contains) {
+		Array.prototype.contains = function (v) {
+			return this.indexOf(v) > -1;
+		}
+	}
+	
+	if (!String.prototype.includes) {
+	  String.prototype.includes = function(search, start) {
+		'use strict';
+		if (typeof start !== 'number') {
+		  start = 0;
+		}
+		
+		if (start + search.length > this.length) {
+		  return false;
+		} else {
+		  return this.indexOf(search, start) !== -1;
+		}
+	  };
+	}
+	
+//	if (!Array.prototype.includes) {
+//	  Array.prototype.includes = function(searchElement /*, fromIndex*/ ) {
+/*		'use strict';
+		var O = Object(this);
+		var len = parseInt(O.length, 10) || 0;
+		if (len === 0) {
+		  return false;
+		}
+		var n = parseInt(arguments[1], 10) || 0;
+		var k;
+		if (n >= 0) {
+		  k = n;
+		} else {
+		  k = len + n;
+		  if (k < 0) {k = 0;}
+		}
+		var currentElement;
+		while (k < len) {
+		  currentElement = O[k];
+		  if (searchElement === currentElement ||
+			 (searchElement !== searchElement && currentElement !== currentElement)) { // NaN !== NaN
+			return true;
+		  }
+		  k++;
+		}
+		return false;
+	  };
+	}
+*/
+	
+	function colourByEnergy(value)
+	{
+		var result;
+		if((value < lo) || (value > hi))
+		{
+			result = 'white';
+		} else {
+			if(value > mid)
+			{ 
+				result = 'lime';
+			} else {
+				var c = Math.round((mid - value)/(mid-lo) * 255);
+				c = Math.min(Math.max(0,c),255);
+				result = 'rgb(' + [c,255,c].join(',') + ')';
+			}
+		}
+		
+		return result;
+	}
+
+	function updateColours()
+	{
+		
+		var xrftable = document.getElementById('xrftable');
+		var cells    = xrftable.getElementsByTagName('td');
+		
+		lo  = parseFloat(document.getElementById('rangestart').value);
+		mid = parseFloat(document.getElementById('optimalstart').value);
+		hi  = parseFloat(document.getElementById('rangeend').value);
+
+		
+		for(i = 0; i < cells.length; i++)
+		{
+			var value = cells[i].innerHTML;
+			if(value.includes('.'))
+			{
+				cells[i].style.backgroundColor = colourByEnergy(parseFloat(value));
+			}
+		}
+	}
+	
+	function restoreAllVisible()
+	{
+		var xrftable = document.getElementById('xrftable');
+		for(i = 0; i < xrftable.rows.length; i++)
+		{
+			xrftable.rows[i].style.display = '';
+		}
+	}
+	
+	function updateVisibility()
+	{
+		
+		var xrftable = document.getElementById('xrftable');
+		var list     = document.getElementById('selectedelements').value.trim().replace(/(;|,)/g,' ').replace(/\s+/g,' ').split(' ');
+		
+		for(i = 0; i < xrftable.rows.length; i++)
+		{
+			var cells = xrftable.rows[i].getElementsByTagName('td');
+			xrftable.rows[i].style.display = list.contains(cells[2].innerHTML.trim()) ? '' : 'none';
+		}
+	}
+	
+	
+	function updateTable()
+	{
+		updateColours();
+		var applyselection = document.getElementById('applyselection').checked ;
+		if(applyselection)
+		{
+			updateVisibility();
+		} else {
+			restoreAllVisible();
+		}
+	}
+</script>
+</head>
+<body onload="updateTable()">
+<h1>X-Ray Emission Lines</h1>
+<p>
+<table>
+	<tr>
+		<td>lower detection limit</td>
+		<td><input type="number" id="rangestart" value="3.5"/> keV</td>
+	</tr>
+	<tr>
+		<td>optimal range start</td>
+		<td><input type="number" id="optimalstart" value="4.1"/> keV</td>
+	</tr>
+	<tr>
+		<td>upper energy limit</td>
+		<td><input type="number" id="rangeend" value="17.5"/> keV</td>
+	</tr>
+	<tr>
+		<td><input type="checkbox" id="applyselection"> only show </td>
+		<td><input type="text" id="selectedelements" value="Mg Al Si Ar K Ca Ti Mn Cr Ni Fe Co Cu Zn Pb As S" size="100"></td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>
+		<td><button type="button" onclick="Javascript:updateTable()">colour visible elements</button></td>
+	</tr>
+</table>
+</p>
+<h3><i>K</i>-level and <i>L</i>-level emission lines in KeV</h3>
+<hr>
+<!--
+<pre>No. Element Ka1       Ka2       Kb1       La1       La2       Lb1       Lb2       Lg1
+
+3   Li      0.0543
+4   Be      0.1085
+5   B       0.1833
+6   C       0.277
+7   N       0.3924
+8   O       0.5249
+9   F       0.6768
+10  Ne      0.8486    0.8486
+11  Na      1.04098   1.04098   1.0711
+12  Mg      1.25360   1.25360   1.3022
+13  Al      1.48670   1.48627   1.55745
+14  Si      1.73998   1.73938   1.83594
+15  P       2.0137    2.0127    2.1391
+16  S       2.30784   2.30664   2.46404
+17  Cl      2.62239   2.62078   2.8156
+18  Ar      2.95770   2.95563   3.1905
+19  K       3.3138    3.3111    3.5896
+20  Ca      3.69168   3.68809   4.0127    0.3413    0.3413    0.3449
+21  Sc      4.0906    4.0861    4.4605    0.3954    0.3954    0.3996
+22  Ti      4.51084   4.50486   4.93181   0.4522    0.4522    0.4584
+23  V       4.95220   4.94464   5.42729   0.5113    0.5113    0.5192
+24  Cr      5.41472   5.405509  5.94671   0.5728    0.5728    0.5828
+25  Mn      5.89875   5.88765   6.49045   0.6374    0.6374    0.6488
+26  Fe      6.40384   6.39084   7.05798   0.7050    0.7050    0.7185
+27  Co      6.93032   6.91530   7.64943   0.7762    0.7762    0.7914
+28  Ni      7.47815   7.46089   8.26466   0.8515    0.8515    0.8688
+29  Cu      8.04778   8.02783   8.90529   0.9297    0.9297    0.9498
+30  Zn      8.63886   8.61578   9.5720    1.0117    1.0117    1.0347
+31  Ga      9.25174   9.22482   10.2642   1.09792   1.09792   1.1248
+32  Ge      9.88642   9.85532   10.9821   1.18800   1.18800   1.2185
+33  As      10.54372  10.50799  11.7262   1.2820    1.2820    1.3170
+34  Se      11.2224   11.1814   12.4959   1.37910   1.37910   1.41923
+35  Br      11.9242   11.8776   13.2914   1.48043   1.48043   1.52590
+36  Kr      12.649    12.598    14.112    1.5860    1.5860    1.6366
+37  Rb      13.3953   13.3358   14.9613   1.69413   1.69256   1.75217
+38  Sr      14.1650   14.0979   15.8357   1.80656   1.80474   1.87172
+39  Y       14.9584   14.8829   16.7378   1.92256   1.92047   1.99584
+40  Zr      15.7751   15.6909   17.6678   2.04236   2.0399    2.1244    2.2194    2.3027
+41  Nb      16.6151   16.5210   18.6225   2.16589   2.1630    2.2574    2.3670    2.4618
+42  Mo      17.47934  17.3743   19.6083   2.29316   2.28985   2.39481   2.5183    2.6235
+43  Tc      18.3671   18.2508   20.619    2.4240    -         2.5368    -         -
+44  Ru      19.2792   19.1504   21.6568   2.55855   2.55431   2.68323   2.8360    2.9645
+45  Rh      20.2161   20.0737   22.7236   2.69674   2.69205   2.83441   3.0013    3.1438
+46  Pd      21.1771   21.0201   23.8187   2.83861   2.83325   2.99022   3.17179   3.3287
+47  Ag      22.16292  21.9903   24.9424   2.98431   2.97821   3.15094   3.34781   3.51959
+48  Cd      23.1736   22.9841   26.0955   3.13373   3.12691   3.31657   3.52812   3.71686
+49  In      24.2097   24.0020   27.2759   3.28694   3.27929   3.48721   3.71381   3.92081
+50  Sn      25.2713   25.0440   28.4860   3.44398   3.43542   3.66280   3.90486   4.13112
+51  Sb      26.3591   26.1108   29.7256   3.60472   3.59532   3.84357   4.10078   4.34779
+52  Te      27.4723   27.2017   30.9957   3.76933   3.7588    4.02958   4.3017    4.5709
+53  I       28.6120   28.3172   32.2947   3.93765   3.92604   4.22072   4.5075    4.8009
+54  Xe      29.779    29.458    33.624    4.1099    -         -         -         -
+55  Cs      30.9728   30.6251   34.9869   4.2865    4.2722    4.6198    4.9359    5.2804
+56  Ba      32.1936   31.8171   36.3782   4.46626   4.45090   4.82753   5.1565    5.5311
+57  La      33.4418   33.0341   37.8010   4.65097   4.63423   5.0421    5.3835    5.7885
+58  Ce      34.7197   34.2789   39.2573   4.8402    4.8230    5.2622    5.6134    6.052
+59  Pr      36.0263   35.5502   40.7482   5.0337    5.0135    5.4889    5.850     6.3221
+60  Nd      37.3610   36.8474   42.2713   5.2304    5.2077    5.7216    6.0894    6.6021
+61  Pm      38.7247   38.1712   43.826    5.4325    5.4078    5.961     6.339     6.892
+62  Sm      40.1181   39.5224   45.413    5.6361    5.6090    6.2051    6.586     7.178
+63  Eu      41.5422   40.9019   47.0379   5.8457    5.8166    6.4564    6.8432    7.4803
+64  Gd      42.9962   42.3089   48.697    6.0572    6.0250    6.7132    7.1028    7.7858
+65  Tb      44.4816   43.7441   50.382    6.2728    6.2380    6.978     7.3667    8.102
+66  Dy      45.9984   45.2078   52.119    6.4952    6.4577    7.2477    7.6357    8.4188
+67  Ho      47.5467   46.6997   53.877    6.7198    6.6795    7.5253    7.911     8.747
+68  Er      49.1277   48.2211   55.681    6.9487    6.9050    7.8109    8.1890    9.089
+69  Tm      50.7416   49.7726   57.517    7.1799    7.1331    8.101     8.468     9.426
+70  Yb      52.3889   51.3540   59.37     7.4156    7.3673    8.4018    8.7S88    9.7801
+71  Lu      54.0698   52.9650   61.283    7.6555    7.6049    8.7090    9.0489    10.1434
+72  Hf      55.7902   54.6114   63.234    7.8990    7.8446    9.0227    9.3473    10.5158
+73  Ta      57.532    56.277    65.223    8.1461    8.0879    9.3431    9.6518    10.8952
+74  W       59.31824  57.9817   67.2443   8.3976    8.3352    9.67235   9.9615    11.2859
+75  Re      61.1403   59.7179   69.310    8.6525    8.5862    10.0100   10.2752   11.6854
+76  Os      63.0005   61.4867   71.413    8.9117    8.8410    10.3553   10.5985   12.0953
+77  Ir      64.8956   63.2867   73.5608   9.1751    9.0995    10.7083   10.9203   12.5126
+78  Pt      66.832    65.112    75.748    9.4423    9.3618    11.0707   11.2505   12.9420
+79  Au      68.8037   66.9895   77.984    9.7133    9.6280    11.4423   11.5847   13.3817
+80  Hg      70.819    68.895    80.253    9.9888    9.8976    11.8226   11.9241   13.8301
+81  Tl      72.8715   70.8319   82.576    10.2685   10.1728   12.2133   12.2715   14.2915
+82  Pb      74.9694   72.8042   84.936    10.5515   10.4495   12.6137   12.6226   14.7644
+83  Bi      77.1079   74.8148   87.343    10.8388   10.73091  13.0235   12.9799   15.2477
+84  Po      79.290    76.862    89.80     11.1308   11.0158   13.447    13.3404   15.744
+8S  At      81.52     78.95     92.30     11.4268   11.3048   13.876    -         16.251
+86  Rn      83.78     81.07     94.87     11.7270   11.5979   14.316    -         16.770
+87  Fr      86.10     83.23     97.47     12.0313   11.8950   14.770    14.45     17.303
+88  Ra      88.47     85.43     100.13    12.3397   12.1962   15.2358   14.8414   17.849
+89  Ac      90.884    87.67     102.85    12.6520   12.5008   15.713    -         18.408
+90  Th      93.350    89.953    105.609   12.9687   12.8096   16.2022   15.6237   18.9825
+91  Pa      95.868    92.287    108.427   13.2907   13.1222   16.702    16.024    19.568
+92  U       98.439    94.665    111.300   13.6147   13.4388   17.2200   16.4283   20.1671
+93  Np      -         -         -         13.9441   13.7597   17.7502   16.8400   20.7848
+94  Pu      -         -         -         14.2786   14.0842   18.2937   17.2553   21.4173
+95  Am      -         -         -         14.6172   14.4119   18.8520   17.6765   22.0652
+</pre>
+-->
+
+<table cellspacing="0" border="0">
+	<colgroup width="85"></colgroup>
+	<colgroup width="32"></colgroup>
+	<colgroup span="9" width="85"></colgroup>
+	<tr>
+		<td height="17" align="right">Number</td>
+		<td align="left"><br></td>
+		<td align="left">Element</td>
+		<td align="left">Ka1</td>
+		<td align="left">Ka2</td>
+		<td align="left">Kb1</td>
+		<td align="left">La1</td>
+		<td align="left">La2</td>
+		<td align="left">Lb1</td>
+		<td align="left">Lb2</td>
+		<td align="left">Lg1</td>
+	</tr>
+	<tr>
+		<td height="17" align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+</table>
+
+<table cellspacing="0" border="0" id="xrftable">
+	<colgroup width="85"></colgroup>
+	<colgroup width="32"></colgroup>
+	<colgroup span="9" width="85"></colgroup>
+
+	<tr>
+		<td height="17" align="right" sdval="3">3</td>
+		<td align="left"><br></td>
+		<td align="left">Li</td>
+		<td align="left">0.0543</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="4">4</td>
+		<td align="left"><br></td>
+		<td align="left">Be</td>
+		<td align="left">0.1085</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="5">5</td>
+		<td align="left"><br></td>
+		<td align="left">B</td>
+		<td align="left">0.1833</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="6">6</td>
+		<td align="left"><br></td>
+		<td align="left">C</td>
+		<td align="left">0.277</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="7">7</td>
+		<td align="left"><br></td>
+		<td align="left">N</td>
+		<td align="left">0.3924</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="8">8</td>
+		<td align="left"><br></td>
+		<td align="left">O</td>
+		<td align="left">0.5249</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="9">9</td>
+		<td align="left"><br></td>
+		<td align="left">F</td>
+		<td align="left">0.6768</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="10">10</td>
+		<td align="left"><br></td>
+		<td align="left">Ne</td>
+		<td align="left">0.8486</td>
+		<td align="left">0.8486</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="11">11</td>
+		<td align="left"><br></td>
+		<td align="left">Na</td>
+		<td align="left">1.04098</td>
+		<td align="left">1.04098</td>
+		<td align="left">1.0711</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="12">12</td>
+		<td align="left"><br></td>
+		<td align="left">Mg</td>
+		<td align="left">1.25360</td>
+		<td align="left">1.25360</td>
+		<td align="left">1.3022</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="13">13</td>
+		<td align="left"><br></td>
+		<td align="left">Al</td>
+		<td align="left">1.48670</td>
+		<td align="left">1.48627</td>
+		<td align="left">1.55745</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="14">14</td>
+		<td align="left"><br></td>
+		<td align="left">Si</td>
+		<td align="left">1.73998</td>
+		<td align="left">1.73938</td>
+		<td align="left">1.83594</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="15">15</td>
+		<td align="left"><br></td>
+		<td align="left">P</td>
+		<td align="left">2.0137</td>
+		<td align="left">2.0127</td>
+		<td align="left">2.1391</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="16">16</td>
+		<td align="left"><br></td>
+		<td align="left">S</td>
+		<td align="left">2.30784</td>
+		<td align="left">2.30664</td>
+		<td align="left">2.46404</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="17">17</td>
+		<td align="left"><br></td>
+		<td align="left">Cl</td>
+		<td align="left">2.62239</td>
+		<td align="left">2.62078</td>
+		<td align="left">2.8156</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="18">18</td>
+		<td align="left"><br></td>
+		<td align="left">Ar</td>
+		<td align="left">2.95770</td>
+		<td align="left">2.95563</td>
+		<td align="left">3.1905</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="19">19</td>
+		<td align="left"><br></td>
+		<td align="left">K</td>
+		<td align="left">3.3138</td>
+		<td align="left">3.3111</td>
+		<td align="left">3.5896</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="20">20</td>
+		<td align="left"><br></td>
+		<td align="left">Ca</td>
+		<td align="left">3.69168</td>
+		<td align="left">3.68809</td>
+		<td align="left">4.0127</td>
+		<td align="left">0.3413</td>
+		<td align="left">0.3413</td>
+		<td align="left">0.3449</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="21">21</td>
+		<td align="left"><br></td>
+		<td align="left">Sc</td>
+		<td align="left">4.0906</td>
+		<td align="left">4.0861</td>
+		<td align="left">4.4605</td>
+		<td align="left">0.3954</td>
+		<td align="left">0.3954</td>
+		<td align="left">0.3996</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="22">22</td>
+		<td align="left"><br></td>
+		<td align="left">Ti</td>
+		<td align="left">4.51084</td>
+		<td align="left">4.50486</td>
+		<td align="left">4.93181</td>
+		<td align="left">0.4522</td>
+		<td align="left">0.4522</td>
+		<td align="left">0.4584</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="23">23</td>
+		<td align="left"><br></td>
+		<td align="left">V</td>
+		<td align="left">4.95220</td>
+		<td align="left">4.94464</td>
+		<td align="left">5.42729</td>
+		<td align="left">0.5113</td>
+		<td align="left">0.5113</td>
+		<td align="left">0.5192</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="24">24</td>
+		<td align="left"><br></td>
+		<td align="left">Cr</td>
+		<td align="left">5.41472</td>
+		<td align="left">5.405509</td>
+		<td align="left">5.94671</td>
+		<td align="left">0.5728</td>
+		<td align="left">0.5728</td>
+		<td align="left">0.5828</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="25">25</td>
+		<td align="left"><br></td>
+		<td align="left">Mn</td>
+		<td align="left">5.89875</td>
+		<td align="left">5.88765</td>
+		<td align="left">6.49045</td>
+		<td align="left">0.6374</td>
+		<td align="left">0.6374</td>
+		<td align="left">0.6488</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="26">26</td>
+		<td align="left"><br></td>
+		<td align="left">Fe</td>
+		<td align="left">6.40384</td>
+		<td align="left">6.39084</td>
+		<td align="left">7.05798</td>
+		<td align="left">0.7050</td>
+		<td align="left">0.7050</td>
+		<td align="left">0.7185</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="27">27</td>
+		<td align="left"><br></td>
+		<td align="left">Co</td>
+		<td align="left">6.93032</td>
+		<td align="left">6.91530</td>
+		<td align="left">7.64943</td>
+		<td align="left">0.7762</td>
+		<td align="left">0.7762</td>
+		<td align="left">0.7914</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="28">28</td>
+		<td align="left"><br></td>
+		<td align="left">Ni</td>
+		<td align="left">7.47815</td>
+		<td align="left">7.46089</td>
+		<td align="left">8.26466</td>
+		<td align="left">0.8515</td>
+		<td align="left">0.8515</td>
+		<td align="left">0.8688</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="29">29</td>
+		<td align="left"><br></td>
+		<td align="left">Cu</td>
+		<td align="left">8.04778</td>
+		<td align="left">8.02783</td>
+		<td align="left">8.90529</td>
+		<td align="left">0.9297</td>
+		<td align="left">0.9297</td>
+		<td align="left">0.9498</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="30">30</td>
+		<td align="left"><br></td>
+		<td align="left">Zn</td>
+		<td align="left">8.63886</td>
+		<td align="left">8.61578</td>
+		<td align="left">9.5720</td>
+		<td align="left">1.0117</td>
+		<td align="left">1.0117</td>
+		<td align="left">1.0347</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="31">31</td>
+		<td align="left"><br></td>
+		<td align="left">Ga</td>
+		<td align="left">9.25174</td>
+		<td align="left">9.22482</td>
+		<td align="left">10.2642</td>
+		<td align="left">1.09792</td>
+		<td align="left">1.09792</td>
+		<td align="left">1.1248</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="32">32</td>
+		<td align="left"><br></td>
+		<td align="left">Ge</td>
+		<td align="left">9.88642</td>
+		<td align="left">9.85532</td>
+		<td align="left">10.9821</td>
+		<td align="left">1.18800</td>
+		<td align="left">1.18800</td>
+		<td align="left">1.2185</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="33">33</td>
+		<td align="left"><br></td>
+		<td align="left">As</td>
+		<td align="left">10.54372</td>
+		<td align="left">10.50799</td>
+		<td align="left">11.7262</td>
+		<td align="left">1.2820</td>
+		<td align="left">1.2820</td>
+		<td align="left">1.3170</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="34">34</td>
+		<td align="left"><br></td>
+		<td align="left">Se</td>
+		<td align="left">11.2224</td>
+		<td align="left">11.1814</td>
+		<td align="left">12.4959</td>
+		<td align="left">1.37910</td>
+		<td align="left">1.37910</td>
+		<td align="left">1.41923</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="35">35</td>
+		<td align="left"><br></td>
+		<td align="left">Br</td>
+		<td align="left">11.9242</td>
+		<td align="left">11.8776</td>
+		<td align="left">13.2914</td>
+		<td align="left">1.48043</td>
+		<td align="left">1.48043</td>
+		<td align="left">1.52590</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="36">36</td>
+		<td align="left"><br></td>
+		<td align="left">Kr</td>
+		<td align="left">12.649</td>
+		<td align="left">12.598</td>
+		<td align="left">14.112</td>
+		<td align="left">1.5860</td>
+		<td align="left">1.5860</td>
+		<td align="left">1.6366</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="37">37</td>
+		<td align="left"><br></td>
+		<td align="left">Rb</td>
+		<td align="left">13.3953</td>
+		<td align="left">13.3358</td>
+		<td align="left">14.9613</td>
+		<td align="left">1.69413</td>
+		<td align="left">1.69256</td>
+		<td align="left">1.75217</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="38">38</td>
+		<td align="left"><br></td>
+		<td align="left">Sr</td>
+		<td align="left">14.1650</td>
+		<td align="left">14.0979</td>
+		<td align="left">15.8357</td>
+		<td align="left">1.80656</td>
+		<td align="left">1.80474</td>
+		<td align="left">1.87172</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="39">39</td>
+		<td align="left"><br></td>
+		<td align="left">Y</td>
+		<td align="left">14.9584</td>
+		<td align="left">14.8829</td>
+		<td align="left">16.7378</td>
+		<td align="left">1.92256</td>
+		<td align="left">1.92047</td>
+		<td align="left">1.99584</td>
+		<td align="left"><br></td>
+		<td align="left"><br></td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="40">40</td>
+		<td align="left"><br></td>
+		<td align="left">Zr</td>
+		<td align="left">15.7751</td>
+		<td align="left">15.6909</td>
+		<td align="left">17.6678</td>
+		<td align="left">2.04236</td>
+		<td align="left">2.0399</td>
+		<td align="left">2.1244</td>
+		<td align="left">2.2194</td>
+		<td align="left">2.3027</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="41">41</td>
+		<td align="left"><br></td>
+		<td align="left">Nb</td>
+		<td align="left">16.6151</td>
+		<td align="left">16.5210</td>
+		<td align="left">18.6225</td>
+		<td align="left">2.16589</td>
+		<td align="left">2.1630</td>
+		<td align="left">2.2574</td>
+		<td align="left">2.3670</td>
+		<td align="left">2.4618</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="42">42</td>
+		<td align="left"><br></td>
+		<td align="left">Mo</td>
+		<td align="left">17.47934</td>
+		<td align="left">17.3743</td>
+		<td align="left">19.6083</td>
+		<td align="left">2.29316</td>
+		<td align="left">2.28985</td>
+		<td align="left">2.39481</td>
+		<td align="left">2.5183</td>
+		<td align="left">2.6235</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="43">43</td>
+		<td align="left"><br></td>
+		<td align="left">Tc</td>
+		<td align="left">18.3671</td>
+		<td align="left">18.2508</td>
+		<td align="left">20.619</td>
+		<td align="left">2.4240</td>
+		<td align="left">-</td>
+		<td align="left">2.5368</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="44">44</td>
+		<td align="left"><br></td>
+		<td align="left">Ru</td>
+		<td align="left">19.2792</td>
+		<td align="left">19.1504</td>
+		<td align="left">21.6568</td>
+		<td align="left">2.55855</td>
+		<td align="left">2.55431</td>
+		<td align="left">2.68323</td>
+		<td align="left">2.8360</td>
+		<td align="left">2.9645</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="45">45</td>
+		<td align="left"><br></td>
+		<td align="left">Rh</td>
+		<td align="left">20.2161</td>
+		<td align="left">20.0737</td>
+		<td align="left">22.7236</td>
+		<td align="left">2.69674</td>
+		<td align="left">2.69205</td>
+		<td align="left">2.83441</td>
+		<td align="left">3.0013</td>
+		<td align="left">3.1438</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="46">46</td>
+		<td align="left"><br></td>
+		<td align="left">Pd</td>
+		<td align="left">21.1771</td>
+		<td align="left">21.0201</td>
+		<td align="left">23.8187</td>
+		<td align="left">2.83861</td>
+		<td align="left">2.83325</td>
+		<td align="left">2.99022</td>
+		<td align="left">3.17179</td>
+		<td align="left">3.3287</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="47">47</td>
+		<td align="left"><br></td>
+		<td align="left">Ag</td>
+		<td align="left">22.16292</td>
+		<td align="left">21.9903</td>
+		<td align="left">24.9424</td>
+		<td align="left">2.98431</td>
+		<td align="left">2.97821</td>
+		<td align="left">3.15094</td>
+		<td align="left">3.34781</td>
+		<td align="left">3.51959</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="48">48</td>
+		<td align="left"><br></td>
+		<td align="left">Cd</td>
+		<td align="left">23.1736</td>
+		<td align="left">22.9841</td>
+		<td align="left">26.0955</td>
+		<td align="left">3.13373</td>
+		<td align="left">3.12691</td>
+		<td align="left">3.31657</td>
+		<td align="left">3.52812</td>
+		<td align="left">3.71686</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="49">49</td>
+		<td align="left"><br></td>
+		<td align="left">In</td>
+		<td align="left">24.2097</td>
+		<td align="left">24.0020</td>
+		<td align="left">27.2759</td>
+		<td align="left">3.28694</td>
+		<td align="left">3.27929</td>
+		<td align="left">3.48721</td>
+		<td align="left">3.71381</td>
+		<td align="left">3.92081</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="50">50</td>
+		<td align="left"><br></td>
+		<td align="left">Sn</td>
+		<td align="left">25.2713</td>
+		<td align="left">25.0440</td>
+		<td align="left">28.4860</td>
+		<td align="left">3.44398</td>
+		<td align="left">3.43542</td>
+		<td align="left">3.66280</td>
+		<td align="left">3.90486</td>
+		<td align="left">4.13112</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="51">51</td>
+		<td align="left"><br></td>
+		<td align="left">Sb</td>
+		<td align="left">26.3591</td>
+		<td align="left">26.1108</td>
+		<td align="left">29.7256</td>
+		<td align="left">3.60472</td>
+		<td align="left">3.59532</td>
+		<td align="left">3.84357</td>
+		<td align="left">4.10078</td>
+		<td align="left">4.34779</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="52">52</td>
+		<td align="left"><br></td>
+		<td align="left">Te</td>
+		<td align="left">27.4723</td>
+		<td align="left">27.2017</td>
+		<td align="left">30.9957</td>
+		<td align="left">3.76933</td>
+		<td align="left">3.7588</td>
+		<td align="left">4.02958</td>
+		<td align="left">4.3017</td>
+		<td align="left">4.5709</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="53">53</td>
+		<td align="left"><br></td>
+		<td align="left">I</td>
+		<td align="left">28.6120</td>
+		<td align="left">28.3172</td>
+		<td align="left">32.2947</td>
+		<td align="left">3.93765</td>
+		<td align="left">3.92604</td>
+		<td align="left">4.22072</td>
+		<td align="left">4.5075</td>
+		<td align="left">4.8009</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="54">54</td>
+		<td align="left"><br></td>
+		<td align="left">Xe</td>
+		<td align="left">29.779</td>
+		<td align="left">29.458</td>
+		<td align="left">33.624</td>
+		<td align="left">4.1099</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="55">55</td>
+		<td align="left"><br></td>
+		<td align="left">Cs</td>
+		<td align="left">30.9728</td>
+		<td align="left">30.6251</td>
+		<td align="left">34.9869</td>
+		<td align="left">4.2865</td>
+		<td align="left">4.2722</td>
+		<td align="left">4.6198</td>
+		<td align="left">4.9359</td>
+		<td align="left">5.2804</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="56">56</td>
+		<td align="left"><br></td>
+		<td align="left">Ba</td>
+		<td align="left">32.1936</td>
+		<td align="left">31.8171</td>
+		<td align="left">36.3782</td>
+		<td align="left">4.46626</td>
+		<td align="left">4.45090</td>
+		<td align="left">4.82753</td>
+		<td align="left">5.1565</td>
+		<td align="left">5.5311</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="57">57</td>
+		<td align="left"><br></td>
+		<td align="left">La</td>
+		<td align="left">33.4418</td>
+		<td align="left">33.0341</td>
+		<td align="left">37.8010</td>
+		<td align="left">4.65097</td>
+		<td align="left">4.63423</td>
+		<td align="left">5.0421</td>
+		<td align="left">5.3835</td>
+		<td align="left">5.7885</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="58">58</td>
+		<td align="left"><br></td>
+		<td align="left">Ce</td>
+		<td align="left">34.7197</td>
+		<td align="left">34.2789</td>
+		<td align="left">39.2573</td>
+		<td align="left">4.8402</td>
+		<td align="left">4.8230</td>
+		<td align="left">5.2622</td>
+		<td align="left">5.6134</td>
+		<td align="left">6.052</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="59">59</td>
+		<td align="left"><br></td>
+		<td align="left">Pr</td>
+		<td align="left">36.0263</td>
+		<td align="left">35.5502</td>
+		<td align="left">40.7482</td>
+		<td align="left">5.0337</td>
+		<td align="left">5.0135</td>
+		<td align="left">5.4889</td>
+		<td align="left">5.850</td>
+		<td align="left">6.3221</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="60">60</td>
+		<td align="left"><br></td>
+		<td align="left">Nd</td>
+		<td align="left">37.3610</td>
+		<td align="left">36.8474</td>
+		<td align="left">42.2713</td>
+		<td align="left">5.2304</td>
+		<td align="left">5.2077</td>
+		<td align="left">5.7216</td>
+		<td align="left">6.0894</td>
+		<td align="left">6.6021</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="61">61</td>
+		<td align="left"><br></td>
+		<td align="left">Pm</td>
+		<td align="left">38.7247</td>
+		<td align="left">38.1712</td>
+		<td align="left">43.826</td>
+		<td align="left">5.4325</td>
+		<td align="left">5.4078</td>
+		<td align="left">5.961</td>
+		<td align="left">6.339</td>
+		<td align="left">6.892</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="62">62</td>
+		<td align="left"><br></td>
+		<td align="left">Sm</td>
+		<td align="left">40.1181</td>
+		<td align="left">39.5224</td>
+		<td align="left">45.413</td>
+		<td align="left">5.6361</td>
+		<td align="left">5.6090</td>
+		<td align="left">6.2051</td>
+		<td align="left">6.586</td>
+		<td align="left">7.178</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="63">63</td>
+		<td align="left"><br></td>
+		<td align="left">Eu</td>
+		<td align="left">41.5422</td>
+		<td align="left">40.9019</td>
+		<td align="left">47.0379</td>
+		<td align="left">5.8457</td>
+		<td align="left">5.8166</td>
+		<td align="left">6.4564</td>
+		<td align="left">6.8432</td>
+		<td align="left">7.4803</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="64">64</td>
+		<td align="left"><br></td>
+		<td align="left">Gd</td>
+		<td align="left">42.9962</td>
+		<td align="left">42.3089</td>
+		<td align="left">48.697</td>
+		<td align="left">6.0572</td>
+		<td align="left">6.0250</td>
+		<td align="left">6.7132</td>
+		<td align="left">7.1028</td>
+		<td align="left">7.7858</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="65">65</td>
+		<td align="left"><br></td>
+		<td align="left">Tb</td>
+		<td align="left">44.4816</td>
+		<td align="left">43.7441</td>
+		<td align="left">50.382</td>
+		<td align="left">6.2728</td>
+		<td align="left">6.2380</td>
+		<td align="left">6.978</td>
+		<td align="left">7.3667</td>
+		<td align="left">8.102</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="66">66</td>
+		<td align="left"><br></td>
+		<td align="left">Dy</td>
+		<td align="left">45.9984</td>
+		<td align="left">45.2078</td>
+		<td align="left">52.119</td>
+		<td align="left">6.4952</td>
+		<td align="left">6.4577</td>
+		<td align="left">7.2477</td>
+		<td align="left">7.6357</td>
+		<td align="left">8.4188</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="67">67</td>
+		<td align="left"><br></td>
+		<td align="left">Ho</td>
+		<td align="left">47.5467</td>
+		<td align="left">46.6997</td>
+		<td align="left">53.877</td>
+		<td align="left">6.7198</td>
+		<td align="left">6.6795</td>
+		<td align="left">7.5253</td>
+		<td align="left">7.911</td>
+		<td align="left">8.747</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="68">68</td>
+		<td align="left"><br></td>
+		<td align="left">Er</td>
+		<td align="left">49.1277</td>
+		<td align="left">48.2211</td>
+		<td align="left">55.681</td>
+		<td align="left">6.9487</td>
+		<td align="left">6.9050</td>
+		<td align="left">7.8109</td>
+		<td align="left">8.1890</td>
+		<td align="left">9.089</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="69">69</td>
+		<td align="left"><br></td>
+		<td align="left">Tm</td>
+		<td align="left">50.7416</td>
+		<td align="left">49.7726</td>
+		<td align="left">57.517</td>
+		<td align="left">7.1799</td>
+		<td align="left">7.1331</td>
+		<td align="left">8.101</td>
+		<td align="left">8.468</td>
+		<td align="left">9.426</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="70">70</td>
+		<td align="left"><br></td>
+		<td align="left">Yb</td>
+		<td align="left">52.3889</td>
+		<td align="left">51.3540</td>
+		<td align="left">59.37</td>
+		<td align="left">7.4156</td>
+		<td align="left">7.3673</td>
+		<td align="left">8.4018</td>
+		<td align="left">8.7S88</td>
+		<td align="left">9.7801</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="71">71</td>
+		<td align="left"><br></td>
+		<td align="left">Lu</td>
+		<td align="left">54.0698</td>
+		<td align="left">52.9650</td>
+		<td align="left">61.283</td>
+		<td align="left">7.6555</td>
+		<td align="left">7.6049</td>
+		<td align="left">8.7090</td>
+		<td align="left">9.0489</td>
+		<td align="left">10.1434</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="72">72</td>
+		<td align="left"><br></td>
+		<td align="left">Hf</td>
+		<td align="left">55.7902</td>
+		<td align="left">54.6114</td>
+		<td align="left">63.234</td>
+		<td align="left">7.8990</td>
+		<td align="left">7.8446</td>
+		<td align="left">9.0227</td>
+		<td align="left">9.3473</td>
+		<td align="left">10.5158</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="73">73</td>
+		<td align="left"><br></td>
+		<td align="left">Ta</td>
+		<td align="left">57.532</td>
+		<td align="left">56.277</td>
+		<td align="left">65.223</td>
+		<td align="left">8.1461</td>
+		<td align="left">8.0879</td>
+		<td align="left">9.3431</td>
+		<td align="left">9.6518</td>
+		<td align="left">10.8952</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="74">74</td>
+		<td align="left"><br></td>
+		<td align="left">W</td>
+		<td align="left">59.31824</td>
+		<td align="left">57.9817</td>
+		<td align="left">67.2443</td>
+		<td align="left">8.3976</td>
+		<td align="left">8.3352</td>
+		<td align="left">9.67235</td>
+		<td align="left">9.9615</td>
+		<td align="left">11.2859</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="75">75</td>
+		<td align="left"><br></td>
+		<td align="left">Re</td>
+		<td align="left">61.1403</td>
+		<td align="left">59.7179</td>
+		<td align="left">69.310</td>
+		<td align="left">8.6525</td>
+		<td align="left">8.5862</td>
+		<td align="left">10.0100</td>
+		<td align="left">10.2752</td>
+		<td align="left">11.6854</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="76">76</td>
+		<td align="left"><br></td>
+		<td align="left">Os</td>
+		<td align="left">63.0005</td>
+		<td align="left">61.4867</td>
+		<td align="left">71.413</td>
+		<td align="left">8.9117</td>
+		<td align="left">8.8410</td>
+		<td align="left">10.3553</td>
+		<td align="left">10.5985</td>
+		<td align="left">12.0953</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="77">77</td>
+		<td align="left"><br></td>
+		<td align="left">Ir</td>
+		<td align="left">64.8956</td>
+		<td align="left">63.2867</td>
+		<td align="left">73.5608</td>
+		<td align="left">9.1751</td>
+		<td align="left">9.0995</td>
+		<td align="left">10.7083</td>
+		<td align="left">10.9203</td>
+		<td align="left">12.5126</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="78">78</td>
+		<td align="left"><br></td>
+		<td align="left">Pt</td>
+		<td align="left">66.832</td>
+		<td align="left">65.112</td>
+		<td align="left">75.748</td>
+		<td align="left">9.4423</td>
+		<td align="left">9.3618</td>
+		<td align="left">11.0707</td>
+		<td align="left">11.2505</td>
+		<td align="left">12.9420</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="79">79</td>
+		<td align="left"><br></td>
+		<td align="left">Au</td>
+		<td align="left">68.8037</td>
+		<td align="left">66.9895</td>
+		<td align="left">77.984</td>
+		<td align="left">9.7133</td>
+		<td align="left">9.6280</td>
+		<td align="left">11.4423</td>
+		<td align="left">11.5847</td>
+		<td align="left">13.3817</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="80">80</td>
+		<td align="left"><br></td>
+		<td align="left">Hg</td>
+		<td align="left">70.819</td>
+		<td align="left">68.895</td>
+		<td align="left">80.253</td>
+		<td align="left">9.9888</td>
+		<td align="left">9.8976</td>
+		<td align="left">11.8226</td>
+		<td align="left">11.9241</td>
+		<td align="left">13.8301</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="81">81</td>
+		<td align="left"><br></td>
+		<td align="left">Tl</td>
+		<td align="left">72.8715</td>
+		<td align="left">70.8319</td>
+		<td align="left">82.576</td>
+		<td align="left">10.2685</td>
+		<td align="left">10.1728</td>
+		<td align="left">12.2133</td>
+		<td align="left">12.2715</td>
+		<td align="left">14.2915</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="82">82</td>
+		<td align="left"><br></td>
+		<td align="left">Pb</td>
+		<td align="left">74.9694</td>
+		<td align="left">72.8042</td>
+		<td align="left">84.936</td>
+		<td align="left">10.5515</td>
+		<td align="left">10.4495</td>
+		<td align="left">12.6137</td>
+		<td align="left">12.6226</td>
+		<td align="left">14.7644</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="83">83</td>
+		<td align="left"><br></td>
+		<td align="left">Bi</td>
+		<td align="left">77.1079</td>
+		<td align="left">74.8148</td>
+		<td align="left">87.343</td>
+		<td align="left">10.8388</td>
+		<td align="left">10.73091</td>
+		<td align="left">13.0235</td>
+		<td align="left">12.9799</td>
+		<td align="left">15.2477</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="84">84</td>
+		<td align="left"><br></td>
+		<td align="left">Po</td>
+		<td align="left">79.290</td>
+		<td align="left">76.862</td>
+		<td align="left">89.80</td>
+		<td align="left">11.1308</td>
+		<td align="left">11.0158</td>
+		<td align="left">13.447</td>
+		<td align="left">13.3404</td>
+		<td align="left">15.744</td>
+	</tr>
+	<tr>
+		<td height="17" align="right">85</td>
+		<td align="left"><br></td>
+		<td align="left">At</td>
+		<td align="left">81.52</td>
+		<td align="left">78.95</td>
+		<td align="left">92.30</td>
+		<td align="left">11.4268</td>
+		<td align="left">11.3048</td>
+		<td align="left">13.876</td>
+		<td align="left">-</td>
+		<td align="left">16.251</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="86">86</td>
+		<td align="left"><br></td>
+		<td align="left">Rn</td>
+		<td align="left">83.78</td>
+		<td align="left">81.07</td>
+		<td align="left">94.87</td>
+		<td align="left">11.7270</td>
+		<td align="left">11.5979</td>
+		<td align="left">14.316</td>
+		<td align="left">-</td>
+		<td align="left">16.770</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="87">87</td>
+		<td align="left"><br></td>
+		<td align="left">Fr</td>
+		<td align="left">86.10</td>
+		<td align="left">83.23</td>
+		<td align="left">97.47</td>
+		<td align="left">12.0313</td>
+		<td align="left">11.8950</td>
+		<td align="left">14.770</td>
+		<td align="left">14.45</td>
+		<td align="left">17.303</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="88">88</td>
+		<td align="left"><br></td>
+		<td align="left">Ra</td>
+		<td align="left">88.47</td>
+		<td align="left">85.43</td>
+		<td align="left">100.13</td>
+		<td align="left">12.3397</td>
+		<td align="left">12.1962</td>
+		<td align="left">15.2358</td>
+		<td align="left">14.8414</td>
+		<td align="left">17.849</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="89">89</td>
+		<td align="left"><br></td>
+		<td align="left">Ac</td>
+		<td align="left">90.884</td>
+		<td align="left">87.67</td>
+		<td align="left">102.85</td>
+		<td align="left">12.6520</td>
+		<td align="left">12.5008</td>
+		<td align="left">15.713</td>
+		<td align="left">-</td>
+		<td align="left">18.408</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="90">90</td>
+		<td align="left"><br></td>
+		<td align="left">Th</td>
+		<td align="left">93.350</td>
+		<td align="left">89.953</td>
+		<td align="left">105.609</td>
+		<td align="left">12.9687</td>
+		<td align="left">12.8096</td>
+		<td align="left">16.2022</td>
+		<td align="left">15.6237</td>
+		<td align="left">18.9825</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="91">91</td>
+		<td align="left"><br></td>
+		<td align="left">Pa</td>
+		<td align="left">95.868</td>
+		<td align="left">92.287</td>
+		<td align="left">108.427</td>
+		<td align="left">13.2907</td>
+		<td align="left">13.1222</td>
+		<td align="left">16.702</td>
+		<td align="left">16.024</td>
+		<td align="left">19.568</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="92">92</td>
+		<td align="left"><br></td>
+		<td align="left">U</td>
+		<td align="left">98.439</td>
+		<td align="left">94.665</td>
+		<td align="left">111.300</td>
+		<td align="left">13.6147</td>
+		<td align="left">13.4388</td>
+		<td align="left">17.2200</td>
+		<td align="left">16.4283</td>
+		<td align="left">20.1671</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="93">93</td>
+		<td align="left"><br></td>
+		<td align="left">Np</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+		<td align="left">13.9441</td>
+		<td align="left">13.7597</td>
+		<td align="left">17.7502</td>
+		<td align="left">16.8400</td>
+		<td align="left">20.7848</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="94">94</td>
+		<td align="left"><br></td>
+		<td align="left">Pu</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+		<td align="left">14.2786</td>
+		<td align="left">14.0842</td>
+		<td align="left">18.2937</td>
+		<td align="left">17.2553</td>
+		<td align="left">21.4173</td>
+	</tr>
+	<tr>
+		<td height="17" align="right" sdval="95">95</td>
+		<td align="left"><br></td>
+		<td align="left">Am</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+		<td align="left">-</td>
+		<td align="left">14.6172</td>
+		<td align="left">14.4119</td>
+		<td align="left">18.8520</td>
+		<td align="left">17.6765</td>
+		<td align="left">22.0652</td>
+	</tr>
+</table>
+
+<hr>
+<h4>Values are from J. A. Bearden, "X-Ray Wavelengths",
+<i>Review of Modern Physics</i>, (January 1967) pp. 86-99,
+unless otherwise noted.</h4>
+<br>
+<br>
+<br>
+<br>
+
+	<i>Modified by H.W. 2016/07/30.<br>
+	table originally downloaded from <a href="http://www.med.harvard.edu/jpnm/physics/refs/xrayemis.html">http://www.med.harvard.edu/jpnm/physics/refs/xrayemis.html</a>
+	2016/07/29</i></br>
+</br>
+
+<div style="background-image: url(&quot;resource://jid1-dqs9bdqga04hbw-at-jetpack/data/content_script/voice.png&quot;);" state="voice" title="Click to Show Translation" class="placeholder-icon" id="tts-placeholder-icon"><canvas style="display: none;" height="36" width="36" class="loading-circle" id="text-to-speech-loader"></canvas></div></body></html>
