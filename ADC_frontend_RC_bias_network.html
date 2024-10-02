@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta charset="UTF-8"> 
+<style>
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  background-color: black;
+  color: #fff;
+  text-align: left;
+  white-space: nowrap;
+  border-radius: 6px;
+  padding: 4px 8px;
+
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+</style>
+<script language="javascript">
+	String.prototype.format = function(placeholders) {
+		var s = this;
+		for(var propertyName in placeholders) {
+			var re = new RegExp('{' + propertyName + '}', 'gm');
+			s = s.replace(re, placeholders[propertyName]);
+		}    
+		return s;
+	};
+	
+	function isFloat(n){
+		return Number(n) === n && n % 1 !== 0;
+	}
+	
+	function isDescendant(parent, child) {
+		 var node = child.parentNode;
+		 while (node != null) {
+			 if (node == parent) {
+				 return true;
+			 }
+			 node = node.parentNode;
+		 }
+		 return false;
+	}
+
+	function v(id){
+		var e = document.getElementById(id);
+		var val = parseFloat(e.value);
+		
+		
+		if(e.hasAttribute("data-coef")){
+			val *= parseFloat(e.dataset.coef);		
+		}
+		return val;
+	}
+	
+	function evaluateFormula(fstr){
+		var re = /\[([^\]]*)\]/gm; // match every element id between '[' and ']' except ']' of course
+		// resolve [id] tags
+		var replaced_fstr = fstr.replace(re, function(match, contents, offset, input_string){
+				return "(v('"+contents+"'))";
+			});
+		return eval(replaced_fstr);
+	}
+	
+	function updateForm(form) {
+		var elements = document.getElementsByTagName("input");
+		for(i = 0; i < elements.length; i++){
+			e = elements[i];
+			if(isDescendant(document.getElementById(form),e)){
+				if(e.hasAttribute('data-formula')){
+					e.value = evaluateFormula(e.dataset.formula);
+					if(e.hasAttribute("data-coef")){
+						e.value =  e.value / parseFloat(e.dataset.coef);		
+					}
+				}
+			}
+		}
+	}
+	
+var tmpl_grouplabel = `	
+	<tr>
+	<td colspan="4"><big><b>{desc}</b></big></td>
+	</tr>
+	`;
+
+var tmpl_input =  `	
+	<tr>
+	<td style="width:30px;"> &nbsp; </td>
+	<td style="width:200px;"><label for="{id}"> {desc} </label> </td>
+	<td style="width:*" ><input type="number" id="{id}" size="25" tabindex="1" value="{value}" data-coef="{coef}"> </td>
+	<td align="left" style="width:100px;"> &nbsp; {unit} </td>
+	<td> <font color="gray"> {id}</font></td>
+	</tr>
+	`;
+
+var tmpl_output = `
+	<tr>
+	<td style="width:30px;"> &nbsp; </td>
+	<td style="width:200px;"><label for="{id}"> {desc} </label> </td>
+	<td style="width:*" >
+	<div class="tooltip"><input type="text" id="{id}" size="25" readonly style="background:silver" data-coef="{coef}" data-formula="{formula}"> 
+	<span class="tooltiptext">{formula}</span></div></td>
+	<td align="left" style="width:100px;"> &nbsp; {unit} </td>
+	<td> <font color="gray"><b>{id}</b></font></td>
+	</tr>
+	`;
+
+var tmpl_button = `
+	<tr>
+	<td colspan="4"> <br>
+	<button type="button" id="calcbutton" onclick="javascript:updateForm(\'{formname}\');" style="width: 36em;height:3em">Update</button> </td>
+	</tr>
+	`;
+
+function createForm(form_id, json_array_string) {
+	var tbl = document.createElement("table");
+	var htmlstr = '';
+	document.getElementById(form_id).appendChild(tbl);
+	
+	var arr = JSON.parse(json_array_string);
+	for( i = 0; i < arr.length; i++) {
+		if(arr[i]['type'] == 'grouplabel') {
+			htmlstr += tmpl_grouplabel.format({desc:arr[i]['text']});	
+		};
+		if(arr[i]['type'] == 'input') {
+			htmlstr += tmpl_input.format({id:arr[i]['id'],desc:arr[i]['desc'],value:arr[i]['value'],unit:arr[i]['unit'],coef:arr[i]['coef']});
+		};
+		if(arr[i]['type'] == 'output') {
+			htmlstr += tmpl_output.format({id:arr[i]['id'],desc:arr[i]['desc'],value:arr[i]['value'],unit:arr[i]['unit'],formula:arr[i]['formula'],coef:arr[i]['coef']});
+		};
+	};
+	htmlstr += tmpl_button.format({formname:form_id});
+	tbl.innerHTML = htmlstr;
+}
+
+</script>
+</head>
+
+<body bgcolor="#E0E0E0">
+
+<p>
+	<h1> ADC input scaling RC network</h1>
+	<table> 
+	<tr> <td>
+	<img src='data:image/png;base64,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'/>
+	</td> <td>
+	</td>
+	</table>
+</p>
+
+
+
+<p>
+<form id="calc0">
+	<!-- form will be generated from json -->
+</form>
+</p>
+
+<script language="javascript">	
+
+
+calc0_json = `[
+	{"type":"grouplabel", "text":"Voltage Ranges"},
+	{"type":"input", "id":"_Uin_min", "desc":"Input voltage (min)", "coef":"1.0", "unit":"V", "value":"-10"},
+	{"type":"input", "id":"_Uin_max", "desc":"Input voltage (max)", "coef":"1.0", "unit":"V", "value":"10"},
+	{"type":"input", "id":"_Uout_min", "desc":"Output voltage (min)", "coef":"1.0", "unit":"V", "value":"0"},
+	{"type":"input", "id":"_Uout_max", "desc":"Output voltage (max)", "coef":"1.0", "unit":"V", "value":"2.5"},
+	{"type":"output", "id":"_Uout_at_zero", "desc":"Output voltage @ 0V input", "coef":"1.0", "unit":"V", "value":"", "formula":"([_Uout_min] + ([_Uout_max]-[_Uout_min]) * -[_Uin_min]/([_Uin_max]-[_Uin_min]))"},
+	{"type":"output", "id":"_sf", "desc":"Divider Scaling Factor", "coef":"1.0", "unit":"", "value":"", "formula":"([_Uout_max]-[_Uout_min])/([_Uin_max]-[_Uin_min])"},
+	
+	
+	{"type":"grouplabel", "text":"Static Divider"},
+	{"type":"input", "id":"_R1", "desc":"R1 - series resistor", "coef":"1.0", "unit":"Ohm", "value":"3000"},
+	{"type":"output", "id":"_R2", "desc":"R2 - lower divider resistor", "coef":"1.0", "unit":"Ohm", "value":"", "formula":"[_R1]*[_sf]/(1-[_sf])"},
+	{"type":"output", "id":"_Rout", "desc":"Output equiv. resistance", "coef":"1.0", "unit":"Ohm", "value":"", "formula":"1/(1/[_R1] + 1/[_R2])"},
+	{"type":"output", "id":"_Rin", "desc":"Input equiv. resistance", "coef":"1.0", "unit":"Ohm", "value":"", "formula":"[_R1]+[_R2]"},
+	{"type":"output", "id":"_Vbias", "desc":"Bias Voltage", "coef":"1.0", "unit":"V", "value":"", "formula":"[_Uout_at_zero] * (1+[_R2]/[_R1])"},
+	
+	{"type":"grouplabel", "text":"AC Parameters"},
+	{"type":"input", "id":"_C2", "desc":"C2 - output capacitance", "coef":"1E-9", "unit":"nF", "value":"1"},
+	{"type":"output", "id":"_C1", "desc":"C1 - compensation capacitance", "coef":"1E-9", "unit":"nF", "value":"", "formula":"[_C2] * [_R2]/[_R1]"},
+	{"type":"output", "id":"_fc", "desc":"Cutoff Frequency (C1=0)", "coef":"1E+3", "unit":"kHz", "value":"", "formula":"1 / (2*Math.PI * [_Rout]*[_C2])"},
+	{"type":"input", "id":"_f_t", "desc":"Test Frequency f_t", "coef":"1E+3", "unit":"kHz", "value":"1000"},
+	{"type":"output", "id":"_X", "desc":"Reactive Load through C1+C2 (at f_t)", "coef":"1", "unit":"j Ohm", "value":"", "formula":"-1 / (2*Math.PI * [_f_t] * (1/(1/[_C1]+1/[_C2])))"}
+]`;
+	
+createForm('calc0', calc0_json);
+</script>
+
+
+</body>
+</html>
