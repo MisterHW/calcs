@@ -198,7 +198,7 @@ calc0_json = `[
 	{"type":"input", "id":"_Uout_max", "desc":"Output voltage (max)", "coef":"1.0", "unit":"V", "value":"2.5"},
 	{"type":"output", "id":"_Uout_at_zero", "desc":"Output voltage @ 0V input", "coef":"1.0", "unit":"V", "value":"", "formula":"([_Uout_min] + ([_Uout_max]-[_Uout_min]) * -[_Uin_min]/([_Uin_max]-[_Uin_min]))"},
 	{"type":"output", "id":"_sf", "desc":"Divider Scaling Factor", "coef":"1.0", "unit":"", "value":"", "formula":"([_Uout_max]-[_Uout_min])/([_Uin_max]-[_Uin_min])"},
-	{"type":"assert", "id":"_plausible_divider", "desc":"Min/max voltages must result non-inverting proportionality.", "formula":"[_sf] > 0"},	
+	{"type":"assert", "id":"_plausible_divider", "desc":"Min/max voltages must result in non-inverting proportionality.", "formula":"[_sf] > 0"},	
 	
 	{"type":"grouplabel", "text":"Static Divider"},
 	{"type":"input", "id":"_R1", "desc":"R1 - series resistor", "coef":"1.0", "unit":"Ohm", "value":"3000"},
