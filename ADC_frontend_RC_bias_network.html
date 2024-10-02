@@ -86,6 +86,17 @@
 				}
 			}
 		}
+		
+		
+		var asserts = document.getElementsByClassName("assert-text");
+		for(i = 0; i < elements.length; i++){
+			e = asserts[i];
+			if(isDescendant(document.getElementById(form),e)){
+				if(e.hasAttribute('data-formula')){
+					e.hidden = evaluateFormula(e.dataset.formula);
+				}
+			}
+		}		
 	}
 	
 var tmpl_grouplabel = `	
@@ -116,6 +127,13 @@ var tmpl_output = `
 	</tr>
 	`;
 
+var tmpl_assert = `
+	<tr>
+	<td style="width:30px;"></td>
+	<td colspan="4"> <div class="assert-text" id="{id}" hidden="True" data-formula="{formula}"><font color="red"><b>{id} : {desc}</b></font> </div> </td>
+	</tr>
+	`;
+	
 var tmpl_button = `
 	<tr>
 	<td colspan="4"> <br>
@@ -138,6 +156,9 @@ function createForm(form_id, json_array_string) {
 		};
 		if(arr[i]['type'] == 'output') {
 			htmlstr += tmpl_output.format({id:arr[i]['id'],desc:arr[i]['desc'],value:arr[i]['value'],unit:arr[i]['unit'],formula:arr[i]['formula'],coef:arr[i]['coef']});
+		};
+		if(arr[i]['type'] == 'assert') {
+			htmlstr += tmpl_assert.format({id:arr[i]['id'],desc:arr[i]['desc'],formula:arr[i]['formula']});
 		};
 	};
 	htmlstr += tmpl_button.format({formname:form_id});
@@ -169,7 +190,6 @@ function createForm(form_id, json_array_string) {
 
 <script language="javascript">	
 
-
 calc0_json = `[
 	{"type":"grouplabel", "text":"Voltage Ranges"},
 	{"type":"input", "id":"_Uin_min", "desc":"Input voltage (min)", "coef":"1.0", "unit":"V", "value":"-10"},
@@ -178,7 +198,7 @@ calc0_json = `[
 	{"type":"input", "id":"_Uout_max", "desc":"Output voltage (max)", "coef":"1.0", "unit":"V", "value":"2.5"},
 	{"type":"output", "id":"_Uout_at_zero", "desc":"Output voltage @ 0V input", "coef":"1.0", "unit":"V", "value":"", "formula":"([_Uout_min] + ([_Uout_max]-[_Uout_min]) * -[_Uin_min]/([_Uin_max]-[_Uin_min]))"},
 	{"type":"output", "id":"_sf", "desc":"Divider Scaling Factor", "coef":"1.0", "unit":"", "value":"", "formula":"([_Uout_max]-[_Uout_min])/([_Uin_max]-[_Uin_min])"},
-	
+	{"type":"assert", "id":"_plausible_divider", "desc":"Min/max voltages must result non-inverting proportionality.", "formula":"[_sf] > 0"},	
 	
 	{"type":"grouplabel", "text":"Static Divider"},
 	{"type":"input", "id":"_R1", "desc":"R1 - series resistor", "coef":"1.0", "unit":"Ohm", "value":"3000"},
@@ -192,7 +212,7 @@ calc0_json = `[
 	{"type":"output", "id":"_C1", "desc":"C1 - compensation capacitance", "coef":"1E-9", "unit":"nF", "value":"", "formula":"[_C2] * [_R2]/[_R1]"},
 	{"type":"output", "id":"_fc", "desc":"Cutoff Frequency (C1=0)", "coef":"1E+3", "unit":"kHz", "value":"", "formula":"1 / (2*Math.PI * [_Rout]*[_C2])"},
 	{"type":"input", "id":"_f_t", "desc":"Test Frequency f_t", "coef":"1E+3", "unit":"kHz", "value":"1000"},
-	{"type":"output", "id":"_X", "desc":"Reactive Load through C1+C2 (at f_t)", "coef":"1", "unit":"j Ohm", "value":"", "formula":"-1 / (2*Math.PI * [_f_t] * (1/(1/[_C1]+1/[_C2])))"}
+	{"type":"output", "id":"_Xin", "desc":"Reactive Load through C1+C2 (at f_t)", "coef":"1", "unit":"j Ohm", "value":"", "formula":"-1 / (2*Math.PI * [_f_t] * (1/(1/[_C1]+1/[_C2])))"}
 ]`;
 	
 createForm('calc0', calc0_json);
