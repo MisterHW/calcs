@@ -197,11 +197,13 @@ function createForm(form_id, json_array_string) {
 
 calc0_json = `[
 	{"type":"grouplabel", "text":"Voltage Ranges"},
-	{"type":"input", "id":"_Uin_min", "desc":"Input voltage (min)", "coef":"1.0", "unit":"V", "value":"-10"},
+	{"type":"input", "id":"_Uin_min", "desc":"Input voltage (min)", "coef":"1.0", "unit":"V", "value":"-10"},	
 	{"type":"input", "id":"_Uin_max", "desc":"Input voltage (max)", "coef":"1.0", "unit":"V", "value":"10"},
+	{"type":"input", "id":"_Uin_test", "desc":"Input voltage (test)", "coef":"1.0", "unit":"V", "value":"0"},
 	{"type":"input", "id":"_Uout_min", "desc":"Output voltage (min)", "coef":"1.0", "unit":"V", "value":"0"},
 	{"type":"input", "id":"_Uout_max", "desc":"Output voltage (max)", "coef":"1.0", "unit":"V", "value":"2.5"},
 	{"type":"output", "id":"_Uout_at_zero", "desc":"Output voltage @ 0V input", "coef":"1.0", "unit":"V", "value":"", "formula":"([_Uout_min] + ([_Uout_max]-[_Uout_min]) * -[_Uin_min]/([_Uin_max]-[_Uin_min]))"},
+	{"type":"output", "id":"_Uout_at_test", "desc":"Output voltage @ Uin_test", "coef":"1.0", "unit":"V", "value":"", "formula":"([_Uout_min] + ([_Uout_max]-[_Uout_min]) * ([_Uin_test]-[_Uin_min])/([_Uin_max]-[_Uin_min]))"},
 	{"type":"output", "id":"_sf", "desc":"Divider Scaling Factor", "coef":"1.0", "unit":"", "value":"", "formula":"([_Uout_max]-[_Uout_min])/([_Uin_max]-[_Uin_min])"},
 	{"type":"assert", "id":"_plausible_divider", "desc":"Min/max voltages must result in non-inverting proportionality.", "formula":"[_sf] > 0"},	
 	
